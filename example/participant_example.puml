@@ -1,10 +1,10 @@
 @startuml
 
-participant Foo1 as Bar1
+actor Foo1 as Bar1
 participant "Foo2" as Bar2
-participant Bar3 as "Foo3"
+database Bar3 as "Foo3"
 participant "Foo4 as Foo4" as Bar4
-participant Bar5 [
+queue Bar5 [
     "Foo5
     as foo5"
 ]

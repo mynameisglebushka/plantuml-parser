@@ -62,8 +62,13 @@ func parseNameAndAlias(words []string) (name string, alias string) {
 	var (
 		nameStarted           bool
 		squareBracketsStarted bool
+		nameIsWritten         bool
 	)
 	for _, v := range words {
+		if nameIsWritten && alias != "" {
+			break
+		}
+
 		switch {
 		case v == `"`:
 			switch {
@@ -73,6 +78,7 @@ func parseNameAndAlias(words []string) (name string, alias string) {
 				nameStarted = true
 			case nameStarted && !squareBracketsStarted:
 				nameStarted = false
+				nameIsWritten = true
 			}
 		case strings.HasPrefix(v, `"`) && !nameStarted && !squareBracketsStarted:
 			if strings.HasSuffix(v, `"`) {
@@ -93,11 +99,14 @@ func parseNameAndAlias(words []string) (name string, alias string) {
 		case strings.HasSuffix(v, `"`) && nameStarted && !squareBracketsStarted:
 			name = name + " " + strings.TrimSuffix(v, `"`)
 			nameStarted = false
+			nameIsWritten = true
 		case v == "]":
 			squareBracketsStarted = false
+			nameIsWritten = true
 		case strings.HasSuffix(v, "]") && squareBracketsStarted && !nameStarted:
 			name = name + " " + strings.TrimSuffix(v, "]")
 			squareBracketsStarted = false
+			nameIsWritten = true
 		case v == "as":
 			if nameStarted {
 				name = name + " " + v
@@ -112,6 +121,10 @@ func parseNameAndAlias(words []string) (name string, alias string) {
 					name = name + " " + v
 				}
 			} else {
+				if alias != "" {
+					name = alias
+					alias = v
+				}
 				alias = v
 			}
 		}
