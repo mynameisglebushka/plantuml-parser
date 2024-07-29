@@ -6,6 +6,7 @@ const (
 	kindEmptyLine = iota
 	kindTextLine
 	kindParticipantLine
+	kindCreateParticipantLine
 	kindParticipantMultiLine
 	kindParticipantMultiLineEnd
 )
@@ -26,6 +27,8 @@ func lineKindOf(line []byte, prevKind int) (kind int) {
 			return kindParticipantMultiLine
 		}
 		return kindParticipantLine
+	case bytes.HasPrefix(line, []byte("create")):
+		return kindCreateParticipantLine
 	case prevKind == kindParticipantMultiLine:
 		if bytes.HasSuffix(line, []byte("]")) {
 			return kindParticipantMultiLineEnd

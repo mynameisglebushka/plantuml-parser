@@ -4,7 +4,7 @@ actor Foo1 as Bar1
 participant "Foo2" as Bar2
 database Bar3 as "Foo3"
 participant "Foo4 as Foo4" as Bar4
-queue Bar5 [
+participant Bar5 [
     "Foo5
     as foo5"
 ]
@@ -21,5 +21,14 @@ Bar12 as "Foo12" -> Bar13
 "Foo16" as Bar16 -> Bar16
 ' Doesn't work because Bar17 declare in ComponentA place
 Bar17 -> Bar17 as "Foo17"
+
+create Bar18 as "Foo18"
+create "Foo19" as Bar19
+' Bar20 Return error
+' create Bar20 [
+'     "Foo20"
+' ]
+create Bar21
+create database Foo22 as Bar22
 
 @enduml

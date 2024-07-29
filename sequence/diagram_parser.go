@@ -66,6 +66,19 @@ func parse(diagram *Diagram, content []byte) {
 			continue
 		case kindParticipantLine:
 			parser.parseParticipant(string(line))
+		case kindCreateParticipantLine:
+			line = bytes.TrimPrefix(line, []byte("create "))
+			if !(bytes.HasPrefix(line, []byte("participant")) ||
+				bytes.HasPrefix(line, []byte("actor")) ||
+				bytes.HasPrefix(line, []byte("boundary")) ||
+				bytes.HasPrefix(line, []byte("control")) ||
+				bytes.HasPrefix(line, []byte("entity")) ||
+				bytes.HasPrefix(line, []byte("database")) ||
+				bytes.HasPrefix(line, []byte("collections")) ||
+				bytes.HasPrefix(line, []byte("queue"))) {
+				line = append([]byte("participant "), line...)
+			}
+			parser.parseParticipant(string(line))
 		case kindParticipantMultiLine:
 			collectedMultiline = collectedMultiline + string(line)
 		case kindParticipantMultiLineEnd:

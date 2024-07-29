@@ -1,7 +1,7 @@
 package sequence
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -17,10 +17,6 @@ const (
 	ParticipantDueueType
 )
 
-var (
-	errNoParticipant = errors.New("undefind participant type")
-)
-
 type Participant struct {
 	Alias string
 	Name  string
@@ -34,7 +30,7 @@ func parseParticipantFromLine(line string) (*Participant, error) {
 
 	_type := checkParticipantType(string(words[0]))
 	if _type == -1 {
-		return nil, errNoParticipant
+		return nil, fmt.Errorf("undefind participant type: %s", words[0])
 	}
 	participant.Type = _type
 
