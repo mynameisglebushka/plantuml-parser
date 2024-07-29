@@ -2,7 +2,6 @@ package sequence
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 )
 
@@ -19,7 +18,7 @@ const (
 )
 
 var (
-	errNoParticipant = errors.New("undefind")
+	errNoParticipant = errors.New("undefind participant type")
 )
 
 type Participant struct {
@@ -28,66 +27,97 @@ type Participant struct {
 	Type  int
 }
 
-type participantParser struct {
-	re *regexp.Regexp
-}
+func parseParticipantFromLine(line string) (*Participant, error) {
+	participant := new(Participant)
 
-func newParticipantParser() *participantParser {
-	re := regexp.MustCompile(`^([^ ]+)[^\S]+([^ ]+)[^\S]+as[^\S]+([^ ]+)$`)
-	return &participantParser{
-		re: re,
-	}
-}
+	words := strings.Split(line, " ")
 
-func (pp *participantParser) parseParticipant(line []byte) (*Participant, error) {
-	p := new(Participant)
-
-	part := pp.re.FindStringSubmatch(string(line))
-
-	// Throw match
-	part = part[1:]
-
-	typ := checkParticipantType(part[0])
-	if typ == -1 {
+	_type := checkParticipantType(string(words[0]))
+	if _type == -1 {
 		return nil, errNoParticipant
 	}
-	p.Type = typ
+	participant.Type = _type
 
-	if len(part) < 3 {
-		p.Alias = part[1]
-		return p, nil
-	}
+	name, alias := parseNameAndAlias(words[1:])
 
+	participant.Alias = alias
+	participant.Name = name
+
+	return participant, nil
+}
+
+func parseParticipantFromMessage(participantDefine string) *Participant {
+	participant := new(Participant)
+
+	name, alias := parseNameAndAlias(strings.Split(participantDefine, " "))
+
+	participant.Type = ParticipantDefaultType
+	participant.Name = name
+	participant.Alias = alias
+
+	return participant
+}
+
+func parseNameAndAlias(words []string) (name string, alias string) {
 	var (
-		name string
-		alias string
+		nameStarted           bool
+		squareBracketsStarted bool
 	)
-	if checkDoubleQuotes(part[1]) {
-		name = part[1]
-		alias = part[2]
-	} else if checkDoubleQuotes(part[2]) {
-		name = part[2]
-		alias = part[1]
+	for _, v := range words {
+		switch {
+		case v == `"`:
+			switch {
+			case !nameStarted && squareBracketsStarted:
+				name = name + " " + v
+			case !nameStarted && !squareBracketsStarted:
+				nameStarted = true
+			case nameStarted && !squareBracketsStarted:
+				nameStarted = false
+			}
+		case strings.HasPrefix(v, `"`) && !nameStarted && !squareBracketsStarted:
+			if strings.HasSuffix(v, `"`) {
+				name = strings.Trim(v, `"`)
+			} else {
+				name = strings.TrimPrefix(v, `"`)
+				nameStarted = true
+			}
+		case v == "[":
+			squareBracketsStarted = true
+		case strings.HasPrefix(v, "[") && !squareBracketsStarted && !nameStarted:
+			if strings.HasSuffix(v, "]") {
+				name = strings.Trim(v, "[]")
+			} else {
+				name = strings.TrimPrefix(v, "[")
+				squareBracketsStarted = true
+			}
+		case strings.HasSuffix(v, `"`) && nameStarted && !squareBracketsStarted:
+			name = name + " " + strings.TrimSuffix(v, `"`)
+			nameStarted = false
+		case v == "]":
+			squareBracketsStarted = false
+		case strings.HasSuffix(v, "]") && squareBracketsStarted && !nameStarted:
+			name = name + " " + strings.TrimSuffix(v, "]")
+			squareBracketsStarted = false
+		case v == "as":
+			if nameStarted {
+				name = name + " " + v
+			} else {
+				continue
+			}
+		default:
+			if nameStarted || squareBracketsStarted {
+				if name == "" {
+					name = v
+				} else {
+					name = name + " " + v
+				}
+			} else {
+				alias = v
+			}
+		}
 	}
 
-	if alias == "" || name == "" {
-		return nil, errNoParticipant
-	}
-
-	p.Alias = alias
-	p.Name = trimDoubleQuotes(name)
-
-	return p, nil
-}
-
-func checkDoubleQuotes(s string) bool {
-	return strings.HasPrefix(s, "\"") && strings.HasSuffix(s, "\"")
-}
-
-func trimDoubleQuotes(s string) string {
-	s = strings.TrimLeft(s, "\"")
-	s = strings.TrimRight(s, "\"")
-	return s
+	return name, alias
 }
 
 func checkParticipantType(s string) int {

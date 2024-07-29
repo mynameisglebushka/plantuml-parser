@@ -1,0 +1,25 @@
+@startuml
+
+participant Foo1 as Bar1
+participant "Foo2" as Bar2
+participant Bar3 as "Foo3"
+participant "Foo4 as Foo4" as Bar4
+participant Bar5 [
+    "Foo5
+    as foo5"
+]
+
+Bar6 -> Bar7 as "Foo7"
+Bar8 -> "Foo9" as Bar9
+
+participant Bar10
+
+Bar11 as "Foo11" -> Bar12 
+' Doesn't work because Bar12 declare in previos line
+Bar12 as "Foo12" -> Bar13 
+"Foo14" as Bar14 -> Bar15
+"Foo16" as Bar16 -> Bar16
+' Doesn't work because Bar17 declare in ComponentA place
+Bar17 -> Bar17 as "Foo17"
+
+@enduml
